@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI思考チーム — SDPF→AWS移行分析</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding-bottom: 60px; }
+  @keyframes bpulse { 0%,80%,100%{transform:scale(0.6);opacity:0.4} 40%{transform:scale(1.1);opacity:1} }
+  .dot { width:8px;height:8px;border-radius:50%;display:inline-block;animation:bpulse 1.4s ease-in-out infinite; }
+  .dots { display:inline-flex;gap:4px;align-items:center; }
+  header { background: linear-gradient(135deg,#1e293b,#0f172a); border-bottom: 1px solid #1e3a5f; padding: 16px 20px; }
+  .header-inner { max-width:900px;margin:0 auto; }
+  .title { display:flex;align-items:center;gap:10px;margin-bottom:8px; }
+  .title-text { font-size:20px;font-weight:800;background:linear-gradient(90deg,#f59e0b,#60a5fa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+  .badges { display:flex;gap:7px;flex-wrap:wrap; }
+  .badge { background:#0f172a;border-radius:20px;padding:3px 11px;font-size:12px;color:#94a3b8; }
+  main { max-width:900px;margin:0 auto;padding:20px 16px; }
+  .config-box { background:#1e3a5f;border:1px solid #2563eb;border-radius:10px;padding:14px 18px;margin-bottom:18px; }
+  .config-box h3 { color:#60a5fa;font-size:14px;margin-bottom:10px; }
+  .config-input { display:flex;gap:8px;align-items:center;margin-bottom:8px; }
+  .config-input label { color:#94a3b8;font-size:12px;width:140px;flex-shrink:0; }
+  .config-input input { flex:1;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;padding:6px 10px;font-size:12px;outline:none; }
+  .config-input input:focus { border-color:#60a5fa; }
+  .save-btn { background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:6px;padding:7px 16px;font-size:12px;cursor:pointer;font-weight:700; }
+  .progress-box { background:#1e293b;border-radius:10px;padding:14px 18px;margin-bottom:18px; }
+  .progress-header { display:flex;justify-content:space-between;margin-bottom:8px; }
+  .progress-bar-bg { background:#0f172a;border-radius:20px;height:8px;overflow:hidden; }
+  .progress-bar { height:100%;background:linear-gradient(90deg,#f59e0b,#60a5fa,#34d399);border-radius:20px;transition:width 0.8s ease;width:0%; }
+  .phase-tags { display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center; }
+  .phase-tag { border-radius:6px;padding:4px 10px;font-size:11px;border:1px solid #334155;color:#475569;transition:all 0.3s; }
+  .run-btn { background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;border-radius:6px;padding:6px 16px;font-size:12px;cursor:pointer;font-weight:800; }
+  .run-btn:disabled { background:#374151;color:#6b7280;cursor:not-allowed; }
+  .reload-btn { background:#334155;color:#e2e8f0;border:none;border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer; }
+  .card { background:#1e293b;border-radius:12px;padding:20px;margin-bottom:14px; }
+  .card-header { display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap; }
+  .phase-badge { border-radius:6px;padding:2px 9px;font-weight:800;font-size:12px;color:#000; }
+  .card-content { color:#cbd5e1;font-size:14px;line-height:1.9;white-space:pre-wrap; }
+  .phase3-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px; }
+  .phase3-card { border-radius:10px;padding:16px; }
+  .error-box { background:#3b0a0a;border:1px solid #ef4444;border-radius:8px;padding:12px;color:#fca5a5;font-size:13px;margin-bottom:14px; }
+  .topic-box { background:#1e293b;border-left:3px solid #475569;border-radius:8px;padding:10px 16px;margin-bottom:20px;color:#94a3b8;font-size:13px;line-height:1.6; }
+  .info-note { color:#64748b;font-size:11px;margin-top:6px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="title">
+      <span style="font-size:24px">🧠</span>
+      <span class="title-text">AI思考チーム</span>
+      <span style="color:#475569;font-size:13px">SDPF → AWS 移行分析</span>
+    </div>
+    <div class="badges">
+      <span class="badge" style="border:1px solid #f59e0b50">🟡 <strong style="color:#f59e0b">Claude Code</strong> / リーダー</span>
+      <span class="badge" style="border:1px solid #4ade8050">🟢 <strong style="color:#4ade80">ChatGPT</strong> / 調査</span>
+      <span class="badge" style="border:1px solid #60a5fa50">🔵 <strong style="color:#60a5fa">Gemini</strong> / 分析</span>
+    </div>
+  </div>
+</header>
+<main>
+
+  <!-- Vercel URL 設定 -->
+  <div class="config-box">
+    <h3>⚙️ Vercel プロキシ設定（デプロイ後に入力）</h3>
+    <div class="config-input">
+      <label>Vercel URL</label>
+      <input type="text" id="vercel-url" placeholder="https://your-project.vercel.app" />
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="save-btn" onclick="saveConfig()">✅ 保存して分析開始</button>
+      <span class="info-note">※ デプロイ前はClaude APIのみで動作します</span>
+    </div>
+  </div>
+
+  <div class="progress-box">
+    <div class="progress-header">
+      <span id="prog-label" style="font-size:13px;color:#94a3b8">Vercel URLを設定するか、そのまま開始してください</span>
+      <span id="prog-pct" style="font-size:13px;color:#60a5fa;font-weight:700">0%</span>
+    </div>
+    <div class="progress-bar-bg"><div class="progress-bar" id="prog-bar"></div></div>
+    <div class="phase-tags">
+      <span class="phase-tag" id="tag1">Phase 1 調査</span>
+      <span class="phase-tag" id="tag2">Phase 2 分析</span>
+      <span class="phase-tag" id="tag3">Phase 3 総合討議</span>
+      <button class="run-btn" id="run-btn" onclick="runAll()">▶ 分析開始</button>
+      <button class="reload-btn" onclick="runAll()">🔄 再実行</button>
+    </div>
+  </div>
+
+  <div class="topic-box">📋 NTT SDPFクラウドからAWSへの移行検討：ベアメタルサーバー30台・Windows VM・Oracle Java・SQL Server環境。移行方法、工期・人月・移行コスト・ランニングコスト差分、5年間でのコスト削減効果を総合評価してほしい。</div>
+
+  <div id="error-area"></div>
+  <div id="phase1-area"></div>
+  <div id="phase2-area"></div>
+  <div id="phase3-area"></div>
+</main>
+
+<script>
+const TOPIC = "NTT SDPFクラウドからAWSへの移行検討：ベアメタルサーバー30台・Windows VM・Oracle Java・SQL Server環境。移行方法、工期・人月・移行コスト・ランニングコスト差分、5年間でのコスト削減効果を総合評価してほしい。";
+
+let VERCEL_URL = '';
+
+function saveConfig() {
+  VERCEL_URL = document.getElementById('vercel-url').value.replace(/\/$/, '');
+  runAll();
+}
+
+function setProgress(pct, label) {
+  document.getElementById('prog-bar').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-label').textContent = label;
+}
+function setTag(id, color, text, bg) {
+  const el = document.getElementById(id);
+  el.textContent = text; el.style.borderColor = color; el.style.color = color; el.style.background = bg || '';
+}
+function dotsHTML(color) {
+  return `<span class="dots">${[0,1,2].map(i=>`<span class="dot" style="background:${color};animation-delay:${i*0.22}s"></span>`).join('')}</span>`;
+}
+
+// Claude API（直接呼び出し可）
+async function callClaude(system, userMsg) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system, messages: [{ role: "user", content: userMsg }] })
+  });
+  const d = await res.json();
+  if (d.error) throw new Error(d.error.message);
+  return d.content?.map(b => b.text || '').join('') || 'エラー';
+}
+
+// OpenAI（Vercelプロキシ経由）
+async function callGPT(system, userMsg) {
+  const url = VERCEL_URL ? `${VERCEL_URL}/api/openai` : null;
+  if (!url) {
+    // フォールバック: Claude が ChatGPT役を担当
+    return callClaude(`あなたはChatGPTとして振る舞ってください。${system}`, userMsg);
+  }
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "gpt-4o", max_tokens: 800, messages: [{ role: "system", content: system }, { role: "user", content: userMsg }] })
+  });
+  const d = await res.json();
+  if (d.error) throw new Error(d.error.message);
+  return d.choices?.[0]?.message?.content || 'エラー';
+}
+
+// Gemini（Vercelプロキシ経由）
+async function callGemini(system, userMsg) {
+  const url = VERCEL_URL ? `${VERCEL_URL}/api/gemini` : null;
+  if (!url) {
+    // フォールバック: Claude が Gemini役を担当
+    return callClaude(`あなたはGeminiとして振る舞ってください。${system}`, userMsg);
+  }
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "gemini-1.5-flash",
+      system_instruction: { parts: [{ text: system }] },
+      contents: [{ role: "user", parts: [{ text: userMsg }] }],
+      generationConfig: { maxOutputTokens: 800 }
+    })
+  });
+  const d = await res.json();
+  if (d.error) throw new Error(d.error?.message || JSON.stringify(d.error));
+  return d.candidates?.[0]?.content?.parts?.[0]?.text || 'エラー';
+}
+
+async function runAll() {
+  ['error-area','phase1-area','phase2-area','phase3-area'].forEach(id => document.getElementById(id).innerHTML = '');
+  ['tag1','tag2','tag3'].forEach(id => { const e=document.getElementById(id); e.style.borderColor='#334155'; e.style.color='#475569'; e.style.background=''; });
+  document.getElementById('run-btn').disabled = true;
+
+  const mode = VERCEL_URL ? '🌐 Vercelプロキシ経由（本物のAI）' : '🤖 Claudeのみモード（Vercel未設定）';
+
+  // Phase 1
+  setProgress(5, `Phase 1: ChatGPT調査中... ${mode}`);
+  setTag('tag1','#4ade80','Phase 1 調査 ⏳','#0a1f0a');
+  document.getElementById('phase1-area').innerHTML = `
+    <div class="card" style="border-left:4px solid #4ade80">
+      <div class="card-header" id="p1-header">
+        <span class="phase-badge" style="background:#4ade80">Phase 1</span>
+        <span style="color:#4ade80;font-weight:700">🟢 ChatGPT — 調査レポート</span>${dotsHTML('#4ade80')}
+      </div>
+      <div class="card-content" id="p1-content">${dotsHTML('#4ade80')}</div>
+    </div>`;
+
+  let res1 = '';
+  try {
+    res1 = await callGPT(
+      `あなたはAI思考チームの調査担当「ChatGPT」です。NTT SDPFからAWSへの移行について以下を箇条書きで調査・整理してください。
+・移行方式の比較（Lift&Shift／Re-platform／Re-architect）
+・移行一時コストの主要項目と概算
+・Oracle Java・SQL Serverのライセンス戦略
+・工期と必要人月の目安
+・主要リスク項目
+400字程度で回答してください。`,
+      TOPIC
+    );
+  } catch(e) { document.getElementById('error-area').innerHTML=`<div class="error-box">⚠️ Phase1エラー: ${e.message}</div>`; document.getElementById('run-btn').disabled=false; return; }
+
+  document.getElementById('p1-content').textContent = res1;
+  document.getElementById('p1-header').innerHTML = `<span class="phase-badge" style="background:#4ade80">Phase 1</span><span style="color:#4ade80;font-weight:700">🟢 ChatGPT — 調査レポート</span><span style="color:#4ade80;font-size:12px">✓ 完了</span>`;
+  setTag('tag1','#4ade80','Phase 1 調査 ✓','#0a1f0a');
+
+  // Phase 2
+  setProgress(40, `Phase 2: Gemini分析中... ${mode}`);
+  setTag('tag2','#60a5fa','Phase 2 分析 ⏳','#0d1830');
+  document.getElementById('phase2-area').innerHTML = `
+    <div class="card" style="border-left:4px solid #60a5fa">
+      <div class="card-header" id="p2-header">
+        <span class="phase-badge" style="background:#60a5fa">Phase 2</span>
+        <span style="color:#60a5fa;font-weight:700">🔵 Gemini — 詳細分析</span>${dotsHTML('#60a5fa')}
+      </div>
+      <div class="card-content" id="p2-content">${dotsHTML('#60a5fa')}</div>
+    </div>`;
+
+  let res2 = '';
+  try {
+    res2 = await callGemini(
+      `あなたはAI思考チームの分析担当「Gemini」です。ChatGPTの調査を踏まえ以下を分析してください。
+・5年間TCO比較（SDPF継続 vs AWS移行）の定量試算
+・コスト削減効果の見積もり（削減率・金額感）
+・移行リスクの優先度と対応策
+・ライセンス最適化（Oracle→Amazon Corretto、SQL Server→RDS/Aurora等）
+・移行成功の重要成功要因
+400字程度で回答してください。`,
+      `【Phase1調査結果】\n${res1}\n\n【議題】\n${TOPIC}`
+    );
+  } catch(e) { document.getElementById('error-area').innerHTML=`<div class="error-box">⚠️ Phase2エラー: ${e.message}</div>`; document.getElementById('run-btn').disabled=false; return; }
+
+  document.getElementById('p2-content').textContent = res2;
+  document.getElementById('p2-header').innerHTML = `<span class="phase-badge" style="background:#60a5fa">Phase 2</span><span style="color:#60a5fa;font-weight:700">🔵 Gemini — 詳細分析</span><span style="color:#4ade80;font-size:12px">✓ 完了</span>`;
+  setTag('tag2','#60a5fa','Phase 2 分析 ✓','#0d1830');
+
+  // Phase 3
+  setProgress(75, `Phase 3: 総合討議中... ${mode}`);
+  setTag('tag3','#f59e0b','Phase 3 総合討議 ⏳','#1a100a');
+  document.getElementById('phase3-area').innerHTML = `
+    <div class="card">
+      <div class="card-header" id="p3-header">
+        <span class="phase-badge" style="background:linear-gradient(90deg,#f59e0b,#60a5fa,#34d399)">Phase 3</span>
+        <span style="font-weight:700;font-size:15px">🤝 総合討議 — 最終提言</span>${dotsHTML('#f59e0b')}
+      </div>
+      <div class="phase3-grid">
+        <div class="phase3-card" style="background:#1c1000;border:1px solid #f59e0b30">
+          <div style="color:#f59e0b;font-weight:700;font-size:14px;margin-bottom:4px">🟡 Claude Code</div>
+          <div style="color:#64748b;font-size:11px;margin-bottom:10px">最終提言・アクションプラン</div>
+          <div class="card-content" id="p3-claude">${dotsHTML('#f59e0b')}</div>
+        </div>
+        <div class="phase3-card" style="background:#041508;border:1px solid #4ade8030">
+          <div style="color:#4ade80;font-weight:700;font-size:14px;margin-bottom:4px">🟢 ChatGPT</div>
+          <div style="color:#64748b;font-size:11px;margin-bottom:10px">コスト・ROI補足意見</div>
+          <div class="card-content" id="p3-gpt">${dotsHTML('#4ade80')}</div>
+        </div>
+        <div class="phase3-card" style="background:#030c1e;border:1px solid #60a5fa30">
+          <div style="color:#60a5fa;font-weight:700;font-size:14px;margin-bottom:4px">🔵 Gemini</div>
+          <div style="color:#64748b;font-size:11px;margin-bottom:10px">リスク・実装上の注意</div>
+          <div class="card-content" id="p3-gemini">${dotsHTML('#60a5fa')}</div>
+        </div>
+      </div>
+    </div>`;
+
+  const ctx = `【議題】\n${TOPIC}\n\n【Phase1調査】\n${res1}\n\n【Phase2分析】\n${res2}`;
+  try {
+    const [rc, rg, rgem] = await Promise.all([
+      callClaude(`あなたはAI思考チームのリーダー「Claude Code」です。調査・分析を踏まえ、SDPF→AWS移行の最終提言・優先アクションプランを250字程度でまとめてください。推奨移行方式と5年ROI見通しを必ず含めてください。`, ctx),
+      callGPT(`あなたはAI思考チームの「ChatGPT」です。最終討議で移行コスト削減と5年ROIについて具体的な数値を含む補足意見を200字程度で述べてください。`, ctx),
+      callGemini(`あなたはAI思考チームの「Gemini」です。最終討議でSDPF→AWS移行の実装リスク・技術的注意点・回避策を200字程度で述べてください。`, ctx),
+    ]);
+    document.getElementById('p3-claude').textContent = rc;
+    document.getElementById('p3-gpt').textContent = rg;
+    document.getElementById('p3-gemini').textContent = rgem;
+  } catch(e) { document.getElementById('error-area').innerHTML=`<div class="error-box">⚠️ Phase3エラー: ${e.message}</div>`; document.getElementById('run-btn').disabled=false; return; }
+
+  document.getElementById('p3-header').innerHTML = `<span class="phase-badge" style="background:linear-gradient(90deg,#f59e0b,#60a5fa,#34d399)">Phase 3</span><span style="font-weight:700;font-size:15px">🤝 総合討議 — 最終提言</span><span style="color:#4ade80;font-size:12px">✓ 完了</span>`;
+  setTag('tag3','#f59e0b','Phase 3 総合討議 ✓','#1a100a');
+  setProgress(100, '✅ 分析完了！');
+  document.getElementById('run-btn').disabled = false;
+}
+</script>
+</body>
+</html>
