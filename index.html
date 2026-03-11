@@ -91,7 +91,7 @@ function setProgress(pct,label){ document.getElementById('prog-bar').style.width
 function setTag(id,color,text,bg){ const el=document.getElementById(id); el.textContent=text; el.style.borderColor=color; el.style.color=color; el.style.background=bg||''; }
 function dotsHTML(color){ return `<span class="dots">${[0,1,2].map(i=>`<span class="dot" style="background:${color};animation-delay:${i*0.22}s"></span>`).join('')}</span>`; }
 async function callClaude(system,userMsg){
-  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system,messages:[{role:"user",content:userMsg}]})});
+  const res=await fetch(`${VERCEL_URL}/api/claude`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system,messages:[{role:"user",content:userMsg}]})});
   const d=await res.json(); if(d.error)throw new Error(d.error.message);
   return d.content?.map(b=>b.text||'').join('')||'エラー';
 }
