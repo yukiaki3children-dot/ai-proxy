@@ -133,11 +133,12 @@ async function runAll(){
   document.getElementById('phase3-area').innerHTML=`<div class="card"><div class="card-header" id="p3-header"><span class="phase-badge" style="background:linear-gradient(90deg,#f59e0b,#60a5fa,#34d399)">Phase 3</span><span style="font-weight:700;font-size:15px">🤝 総合討議 — 最終提言</span>${dotsHTML('#f59e0b')}</div><div class="phase3-grid"><div class="phase3-card" style="background:#1c1000;border:1px solid #f59e0b30"><div style="color:#f59e0b;font-weight:700;font-size:14px;margin-bottom:4px">🟡 Claude Code</div><div style="color:#64748b;font-size:11px;margin-bottom:10px">最終提言・アクションプラン</div><div class="card-content" id="p3-claude">${dotsHTML('#f59e0b')}</div></div><div class="phase3-card" style="background:#041508;border:1px solid #4ade8030"><div style="color:#4ade80;font-weight:700;font-size:14px;margin-bottom:4px">🟢 ChatGPT (gpt-4o)</div><div style="color:#64748b;font-size:11px;margin-bottom:10px">補足意見・追加提案</div><div class="card-content" id="p3-gpt">${dotsHTML('#4ade80')}</div></div><div class="phase3-card" style="background:#030c1e;border:1px solid #60a5fa30"><div style="color:#60a5fa;font-weight:700;font-size:14px;margin-bottom:4px">🔵 Gemini (1.5-flash)</div><div style="color:#64748b;font-size:11px;margin-bottom:10px">リスク・実装上の注意</div><div class="card-content" id="p3-gemini">${dotsHTML('#60a5fa')}</div></div></div></div>`;
   const ctx=`【議題】\n${topic}\n\n【Phase1 ChatGPT調査】\n${res1}\n\n【Phase2 Gemini分析】\n${res2}`;
   try{
-    const [rc,rg,rgem]=await Promise.all([
-      callClaude(`あなたはAI思考チームのリーダー「Claude Code」です。調査・分析を踏まえ最終提言・アクションプランを250字程度でまとめてください。`,ctx),
-      callGPT(`あなたはAI思考チームの「ChatGPT」です。最終討議で補足意見・追加提案を200字程度で述べてください。`,ctx),
-      callGemini(`あなたはAI思考チームの「Gemini」です。最終討議で実装リスク・注意点を200字程度で述べてください。`,ctx),
-    ]);
+    const rc = await callClaude(`あなたはAI思考チームのリーダー「Claude Code」です。調査・分析を踏まえ最終提言・アクションプランを250字程度でまとめてください。`,ctx);
+document.getElementById('p3-claude').textContent=rc;
+const rg = await callGPT(`あなたはAI思考チームの「ChatGPT」です。最終討議で補足意見・追加提案を200字程度で述べてください。`,ctx);
+document.getElementById('p3-gpt').textContent=rg;
+const rgem = await callGemini(`あなたはAI思考チームの「Gemini」です。最終討議で実装リスク・注意点を200字程度で述べてください。`,ctx);
+document.getElementById('p3-gemini').textContent=rgem;
     document.getElementById('p3-claude').textContent=rc;
     document.getElementById('p3-gpt').textContent=rg;
     document.getElementById('p3-gemini').textContent=rgem;
