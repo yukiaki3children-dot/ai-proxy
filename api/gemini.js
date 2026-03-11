@@ -7,7 +7,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { model = 'gemini-1.5-flash', ...body } = req.body;
+    const { model = 'gemini-2.0-flash', ...body } = req.body;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
     const response = await fetch(url, {
