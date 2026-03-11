@@ -101,7 +101,7 @@ async function callGPT(system,userMsg){
   return d.choices?.[0]?.message?.content||'エラー';
 }
 async function callGemini(system,userMsg){
-  const res=await fetch(`${VERCEL_URL}/api/gemini`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"gemini-1.5-flash",system_instruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:userMsg}]}],generationConfig:{maxOutputTokens:800}})});
+  const res=await fetch(`${VERCEL_URL}/api/gemini`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"gemini-2.0-flash",system_instruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:userMsg}]}],generationConfig:{maxOutputTokens:800}})});
   const d=await res.json(); if(d.error)throw new Error(typeof d.error==='string'?d.error:JSON.stringify(d.error));
   return d.candidates?.[0]?.content?.parts?.[0]?.text||'エラー';
 }
