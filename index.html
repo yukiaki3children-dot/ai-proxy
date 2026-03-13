@@ -3,41 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI思考チーム — SDPF→AWS移行分析</title>
+<title>AI思考チーム — SDPF→AWS移行提案書作成</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding-bottom: 60px; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding-bottom: 80px; }
   @keyframes bpulse { 0%,80%,100%{transform:scale(0.6);opacity:0.4} 40%{transform:scale(1.1);opacity:1} }
   .dot { width:8px;height:8px;border-radius:50%;display:inline-block;animation:bpulse 1.4s ease-in-out infinite; }
   .dots { display:inline-flex;gap:4px;align-items:center; }
   header { background: linear-gradient(135deg,#1e293b,#0f172a); border-bottom: 1px solid #1e3a5f; padding: 16px 20px; }
-  .header-inner { max-width:900px;margin:0 auto; }
+  .header-inner { max-width:960px;margin:0 auto; }
   .title { display:flex;align-items:center;gap:10px;margin-bottom:8px; }
   .title-text { font-size:20px;font-weight:800;background:linear-gradient(90deg,#f59e0b,#60a5fa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
   .badges { display:flex;gap:7px;flex-wrap:wrap; }
   .badge { background:#0f172a;border-radius:20px;padding:3px 11px;font-size:12px;color:#94a3b8; }
-  main { max-width:900px;margin:0 auto;padding:20px 16px; }
-  .status-bar { background:#1e293b;border:1px solid #1e3a5f;border-radius:10px;padding:10px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;font-size:12px; }
-  .status-dot { width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80; }
-  .progress-box { background:#1e293b;border-radius:10px;padding:14px 18px;margin-bottom:18px; }
+  main { max-width:960px;margin:0 auto;padding:20px 16px; }
+  .status-bar { background:#1e293b;border:1px solid #1e3a5f;border-radius:10px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:12px;flex-wrap:wrap; }
+  .status-dot { width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;flex-shrink:0; }
+  .round-bar { background:#1e293b;border-radius:10px;padding:14px 18px;margin-bottom:16px; }
+  .round-dots { display:flex;gap:8px;margin-top:10px;flex-wrap:wrap; }
+  .round-dot { width:32px;height:32px;border-radius:50%;border:2px solid #334155;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#475569;transition:all 0.3s; }
+  .round-dot.active { border-color:#f59e0b;color:#f59e0b;background:#1a1000; }
+  .round-dot.done { border-color:#4ade80;color:#4ade80;background:#0a1f0a; }
+  .progress-box { background:#1e293b;border-radius:10px;padding:14px 18px;margin-bottom:16px; }
   .progress-header { display:flex;justify-content:space-between;margin-bottom:8px; }
   .progress-bar-bg { background:#0f172a;border-radius:20px;height:8px;overflow:hidden; }
   .progress-bar { height:100%;background:linear-gradient(90deg,#f59e0b,#60a5fa,#34d399);border-radius:20px;transition:width 0.8s ease;width:0%; }
   .phase-tags { display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center; }
   .phase-tag { border-radius:6px;padding:4px 10px;font-size:11px;border:1px solid #334155;color:#475569;transition:all 0.3s; }
-  .run-btn { background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;border-radius:6px;padding:6px 18px;font-size:12px;cursor:pointer;font-weight:800; }
-  .run-btn:disabled { background:#374151;color:#6b7280;cursor:not-allowed; }
-  .input-box { background:#1e293b;border-radius:10px;padding:14px 18px;margin-bottom:18px; }
-  .input-box label { color:#64748b;font-size:11px;display:block;margin-bottom:6px; }
-  .input-box textarea { width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;padding:10px 14px;font-size:13px;resize:vertical;outline:none;line-height:1.6; }
-  .input-box textarea:focus { border-color:#60a5fa; }
+  .btn-primary { background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;border-radius:6px;padding:8px 20px;font-size:13px;cursor:pointer;font-weight:800; }
+  .btn-primary:disabled { background:#374151;color:#6b7280;cursor:not-allowed; }
+  .btn-secondary { background:#334155;color:#e2e8f0;border:none;border-radius:6px;padding:7px 14px;font-size:12px;cursor:pointer; }
+  .btn-success { background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;cursor:pointer;font-weight:800; }
   .card { background:#1e293b;border-radius:12px;padding:20px;margin-bottom:14px; }
   .card-header { display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap; }
   .phase-badge { border-radius:6px;padding:2px 9px;font-weight:800;font-size:12px;color:#000; }
   .card-content { color:#cbd5e1;font-size:14px;line-height:1.9;white-space:pre-wrap; }
-  .phase3-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px; }
+  .phase3-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px; }
   .phase3-card { border-radius:10px;padding:16px; }
   .error-box { background:#3b0a0a;border:1px solid #ef4444;border-radius:8px;padding:12px;color:#fca5a5;font-size:13px;margin-bottom:14px; }
+  .round-section { border:1px solid #1e3a5f;border-radius:12px;margin-bottom:20px;overflow:hidden; }
+  .round-header { background:#1e293b;padding:12px 18px;display:flex;align-items:center;gap:10px;cursor:pointer; }
+  .round-header:hover { background:#253347; }
+  .round-body { padding:16px;background:#0f1829; }
+  .round-label { font-weight:700;font-size:14px; }
+  .final-proposal { background:#1e293b;border:2px solid #4ade80;border-radius:12px;padding:24px;margin-top:20px; }
+  .final-proposal h2 { color:#4ade80;margin-bottom:16px;font-size:18px; }
+  .proposal-content { color:#cbd5e1;font-size:14px;line-height:2;white-space:pre-wrap; }
+  .collapse-btn { margin-left:auto;color:#475569;font-size:12px; }
 </style>
 </head>
 <body>
@@ -45,12 +57,13 @@
   <div class="header-inner">
     <div class="title">
       <span style="font-size:24px">🧠</span>
-      <span class="title-text">AI思考チーム</span>
+      <span class="title-text">AI思考チーム — 提案書作成モード</span>
     </div>
     <div class="badges">
       <span class="badge" style="border:1px solid #f59e0b50">🟡 <strong style="color:#f59e0b">Claude Code</strong> / リーダー</span>
-      <span class="badge" style="border:1px solid #4ade8050">🟢 <strong style="color:#4ade80">ChatGPT</strong> (gpt-4o) / 調査</span>
-      <span class="badge" style="border:1px solid #60a5fa50">🔵 <strong style="color:#60a5fa">Gemini</strong> (1.5-flash) / 分析</span>
+      <span class="badge" style="border:1px solid #4ade8050">🟢 <strong style="color:#4ade80">ChatGPT</strong> (gpt-4o)</span>
+      <span class="badge" style="border:1px solid #60a5fa50">🔵 <strong style="color:#60a5fa">Gemini</strong> (gemini-2.5-flash)</span>
+      <span class="badge" style="border:1px solid #a78bfa50">🔄 <strong style="color:#a78bfa">5ラウンド</strong> ブラッシュアップ</span>
     </div>
   </div>
 </header>
@@ -59,94 +72,284 @@
     <span class="status-dot"></span>
     <span style="color:#4ade80;font-weight:700">Vercelプロキシ接続済み</span>
     <span style="color:#475569">— ai-proxy-neon.vercel.app</span>
-    <span style="margin-left:auto;color:#475569">ChatGPT・Gemini・Claude すべて本物のAPIで動作</span>
+    <span style="margin-left:auto;color:#64748b;font-size:11px">3AIが5回の討議を経て提案書を完成させます</span>
   </div>
-  <div class="input-box">
-    <label>💬 議題を入力（Enterで実行、Shift+Enterで改行）</label>
-    <textarea id="topic-input" rows="3" onkeydown="handleKey(event)">NTT SDPFクラウドからAWSへの移行検討：ベアメタルサーバー30台・Windows VM・Oracle Java・SQL Server環境。移行方法、工期・人月・移行コスト・ランニングコスト差分、5年間でのコスト削減効果を総合評価してほしい。</textarea>
+
+  <!-- ラウンド進捗 -->
+  <div class="round-bar">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="font-size:13px;color:#94a3b8" id="round-label">「分析開始」を押すと5ラウンドの討議が始まります</span>
+      <span style="font-size:13px;color:#f59e0b;font-weight:700" id="round-pct">Round 0/5</span>
+    </div>
+    <div class="round-dots">
+      <div class="round-dot" id="rd1">1</div>
+      <div class="round-dot" id="rd2">2</div>
+      <div class="round-dot" id="rd3">3</div>
+      <div class="round-dot" id="rd4">4</div>
+      <div class="round-dot" id="rd5">5</div>
+      <span style="color:#64748b;font-size:11px;margin-left:8px;align-self:center">各ラウンド: Phase1(ChatGPT調査)→Phase2(Gemini分析)→Phase3(3AI討議)</span>
+    </div>
   </div>
+
+  <!-- フェーズ進捗 -->
   <div class="progress-box">
     <div class="progress-header">
-      <span id="prog-label" style="font-size:13px;color:#94a3b8">議題を入力して「分析開始」を押してください</span>
+      <span id="prog-label" style="font-size:13px;color:#94a3b8">待機中</span>
       <span id="prog-pct" style="font-size:13px;color:#60a5fa;font-weight:700">0%</span>
     </div>
     <div class="progress-bar-bg"><div class="progress-bar" id="prog-bar"></div></div>
-    <div class="phase-tags">
-      <span class="phase-tag" id="tag1">Phase 1 ChatGPT調査</span>
-      <span class="phase-tag" id="tag2">Phase 2 Gemini分析</span>
-      <span class="phase-tag" id="tag3">Phase 3 総合討議</span>
-      <button class="run-btn" id="run-btn" onclick="runAll()">▶ 分析開始</button>
+    <div class="phase-tags" style="margin-top:12px;">
+      <button class="btn-primary" id="run-btn" onclick="runAll()">▶ 分析開始（5ラウンド）</button>
+      <button class="btn-secondary" onclick="location.reload()">🔄 リセット</button>
     </div>
   </div>
+
   <div id="error-area"></div>
-  <div id="phase1-area"></div>
-  <div id="phase2-area"></div>
-  <div id="phase3-area"></div>
+  <div id="rounds-area"></div>
+  <div id="final-area"></div>
 </main>
+
 <script>
 const VERCEL_URL = "https://ai-proxy-neon.vercel.app";
-function handleKey(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();runAll();} }
-function getTopic() { return document.getElementById('topic-input').value.trim(); }
-function setProgress(pct,label){ document.getElementById('prog-bar').style.width=pct+'%'; document.getElementById('prog-pct').textContent=pct+'%'; document.getElementById('prog-label').textContent=label; }
-function setTag(id,color,text,bg){ const el=document.getElementById(id); el.textContent=text; el.style.borderColor=color; el.style.color=color; el.style.background=bg||''; }
-function dotsHTML(color){ return `<span class="dots">${[0,1,2].map(i=>`<span class="dot" style="background:${color};animation-delay:${i*0.22}s"></span>`).join('')}</span>`; }
-async function callClaude(system,userMsg){
-  const res=await fetch(`${VERCEL_URL}/api/claude`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system,messages:[{role:"user",content:userMsg}]})});
-  const d=await res.json(); if(d.error)throw new Error(d.error.message);
-  return d.content?.map(b=>b.text||'').join('')||'エラー';
+
+const SYSTEM_INFO = `【現行システム構成】
+■会員サイト（レポート配信）
+構成: ファイアウォール→ロードバランサー→リバプロサーバー→WebAPサーバー
+- リバプロサーバー: Linux × 2台（本番）、× 1台（ステージング）
+- WebAPサーバー: Windows Server 2016 × 2台（本番）、× 1台（ステージング）
+- DBサーバー: Windows SQL Server 2016 × 1台（本番）、× 1台（ステージング）
+- バッチサーバー: Windows Server 2016 × 1台（本番）、× 1台（ステージング）
+- アプリ: Oracle Java + Tomcat 9
+
+■情報基盤サイト（会員サイトへの一方向アクセス許可）
+- APサーバー: Windows Server 2016 × 2台（本番）、× 1台（ステージング）
+- DBサーバー: Windows SQL Server 2016 × 2台（本番）、× 1台（ステージング）
+- バッチサーバー: Windows Server 2016 × 2台（本番）、× 1台（ステージング）
+- 管理サーバー × 1台、踏み台サーバー × 1台、研究用サーバー × 1台
+- アプリ: Oracle Java + Tomcat 9
+
+■課題: NTT SDPFのコスト高騰、WAF改悪等`;
+
+const ROUND_THEMES = [
+  "現行システムの課題整理とAWS移行の基本方針策定（Lift&Shift vs Re-platform比較）",
+  "AWS移行の具体的なアーキテクチャ設計（各サーバーのAWSサービスへのマッピング）",
+  "移行作業項目の詳細化と工数・費用試算（移行コスト・ランニングコスト）",
+  "SDPF延命案（OS/SQL Server/Tomcatバージョンアップ）との詳細比較と5年間TCO分析",
+  "提案書の最終ブラッシュアップ（リスク対策・移行スケジュール・推奨案の確定）"
+];
+
+function dotsHTML(color) {
+  return `<span class="dots">${[0,1,2].map(i=>`<span class="dot" style="background:${color};animation-delay:${i*0.22}s"></span>`).join('')}</span>`;
 }
-async function callGPT(system,userMsg){
-  const res=await fetch(`${VERCEL_URL}/api/openai`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-4o",max_tokens:800,messages:[{role:"system",content:system},{role:"user",content:userMsg}]})});
-  const d=await res.json(); if(d.error)throw new Error(typeof d.error==='string'?d.error:d.error.message);
-  return d.choices?.[0]?.message?.content||'エラー';
+function setProgress(pct, label) {
+  document.getElementById('prog-bar').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-label').textContent = label;
 }
-async function callGemini(system,userMsg){
-  const res=await fetch(`${VERCEL_URL}/api/gemini`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"gemini-2.5-flash",system_instruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:userMsg}]}],generationConfig:{maxOutputTokens:800}})});
-  const d=await res.json(); if(d.error)throw new Error(typeof d.error==='string'?d.error:JSON.stringify(d.error));
-  return d.candidates?.[0]?.content?.parts?.[0]?.text||'エラー';
+function setTag(id, color, text, bg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text; el.style.borderColor = color; el.style.color = color; el.style.background = bg || '';
 }
-async function runAll(){
-  const topic=getTopic(); if(!topic)return;
-  ['error-area','phase1-area','phase2-area','phase3-area'].forEach(id=>document.getElementById(id).innerHTML='');
-  ['tag1','tag2','tag3'].forEach(id=>{const e=document.getElementById(id);e.style.borderColor='#334155';e.style.color='#475569';e.style.background='';});
-  document.getElementById('run-btn').disabled=true;
-  setProgress(5,'Phase 1: ChatGPT (gpt-4o) 調査中...');
-  setTag('tag1','#4ade80','Phase 1 ChatGPT調査 ⏳','#0a1f0a');
-  document.getElementById('phase1-area').innerHTML=`<div class="card" style="border-left:4px solid #4ade80"><div class="card-header" id="p1-header"><span class="phase-badge" style="background:#4ade80">Phase 1</span><span style="color:#4ade80;font-weight:700">🟢 ChatGPT (gpt-4o) — 調査レポート</span>${dotsHTML('#4ade80')}</div><div class="card-content" id="p1-content">${dotsHTML('#4ade80')}</div></div>`;
-  let res1='';
-  try{ res1=await callGPT(`あなたはAI思考チームの調査担当「ChatGPT」です。与えられたテーマについて幅広い観点から事実・現状・主要な論点・関連データを調査・整理してください。箇条書きで構造化して400字程度。`,topic); }
-  catch(e){ document.getElementById('error-area').innerHTML=`<div class="error-box">⚠️ Phase1エラー (ChatGPT): ${e.message}</div>`; document.getElementById('run-btn').disabled=false; return; }
-  document.getElementById('p1-content').textContent=res1;
-  document.getElementById('p1-header').innerHTML=`<span class="phase-badge" style="background:#4ade80">Phase 1</span><span style="color:#4ade80;font-weight:700">🟢 ChatGPT (gpt-4o) — 調査レポート</span><span style="color:#4ade80;font-size:12px">✓ 完了</span>`;
-  setTag('tag1','#4ade80','Phase 1 ChatGPT調査 ✓','#0a1f0a');
-  setProgress(40,'Phase 2: Gemini (1.5-flash) 分析中...');
-  setTag('tag2','#60a5fa','Phase 2 Gemini分析 ⏳','#0d1830');
-  document.getElementById('phase2-area').innerHTML=`<div class="card" style="border-left:4px solid #60a5fa"><div class="card-header" id="p2-header"><span class="phase-badge" style="background:#60a5fa">Phase 2</span><span style="color:#60a5fa;font-weight:700">🔵 Gemini (1.5-flash) — 詳細分析</span>${dotsHTML('#60a5fa')}</div><div class="card-content" id="p2-content">${dotsHTML('#60a5fa')}</div></div>`;
-  let res2='';
-  try{ res2=await callGemini(`あなたはAI思考チームの分析担当「Gemini」です。ChatGPTの調査を受け取り深い洞察・リスク・機会を多角的に分析してください。400字程度。`,`【ChatGPT調査結果】\n${res1}\n\n【議題】\n${topic}`); }
-  catch(e){ document.getElementById('error-area').innerHTML=`<div class="error-box">⚠️ Phase2エラー (Gemini): ${e.message}</div>`; document.getElementById('run-btn').disabled=false; return; }
-  document.getElementById('p2-content').textContent=res2;
-  document.getElementById('p2-header').innerHTML=`<span class="phase-badge" style="background:#60a5fa">Phase 2</span><span style="color:#60a5fa;font-weight:700">🔵 Gemini (1.5-flash) — 詳細分析</span><span style="color:#4ade80;font-size:12px">✓ 完了</span>`;
-  setTag('tag2','#60a5fa','Phase 2 Gemini分析 ✓','#0d1830');
-  setProgress(75,'Phase 3: Claude・ChatGPT・Gemini 総合討議中...');
-  setTag('tag3','#f59e0b','Phase 3 総合討議 ⏳','#1a100a');
-  document.getElementById('phase3-area').innerHTML=`<div class="card"><div class="card-header" id="p3-header"><span class="phase-badge" style="background:linear-gradient(90deg,#f59e0b,#60a5fa,#34d399)">Phase 3</span><span style="font-weight:700;font-size:15px">🤝 総合討議 — 最終提言</span>${dotsHTML('#f59e0b')}</div><div class="phase3-grid"><div class="phase3-card" style="background:#1c1000;border:1px solid #f59e0b30"><div style="color:#f59e0b;font-weight:700;font-size:14px;margin-bottom:4px">🟡 Claude Code</div><div style="color:#64748b;font-size:11px;margin-bottom:10px">最終提言・アクションプラン</div><div class="card-content" id="p3-claude">${dotsHTML('#f59e0b')}</div></div><div class="phase3-card" style="background:#041508;border:1px solid #4ade8030"><div style="color:#4ade80;font-weight:700;font-size:14px;margin-bottom:4px">🟢 ChatGPT (gpt-4o)</div><div style="color:#64748b;font-size:11px;margin-bottom:10px">補足意見・追加提案</div><div class="card-content" id="p3-gpt">${dotsHTML('#4ade80')}</div></div><div class="phase3-card" style="background:#030c1e;border:1px solid #60a5fa30"><div style="color:#60a5fa;font-weight:700;font-size:14px;margin-bottom:4px">🔵 Gemini (1.5-flash)</div><div style="color:#64748b;font-size:11px;margin-bottom:10px">リスク・実装上の注意</div><div class="card-content" id="p3-gemini">${dotsHTML('#60a5fa')}</div></div></div></div>`;
-  const ctx=`【議題】\n${topic}\n\n【Phase1 ChatGPT調査】\n${res1}\n\n【Phase2 Gemini分析】\n${res2}`;
-  try{
-    const rc = await callClaude(`あなたはAI思考チームのリーダー「Claude Code」です。調査・分析を踏まえ最終提言・アクションプランを250字程度でまとめてください。`,ctx);
-document.getElementById('p3-claude').textContent=rc;
-const rg = await callGPT(`あなたはAI思考チームの「ChatGPT」です。最終討議で補足意見・追加提案を200字程度で述べてください。`,ctx);
-document.getElementById('p3-gpt').textContent=rg;
-const rgem = await callGemini(`あなたはAI思考チームの「Gemini」です。最終討議で実装リスク・注意点を200字程度で述べてください。`,ctx);
-document.getElementById('p3-gemini').textContent=rgem;
-    document.getElementById('p3-claude').textContent=rc;
-    document.getElementById('p3-gpt').textContent=rg;
-    document.getElementById('p3-gemini').textContent=rgem;
-  }catch(e){ document.getElementById('error-area').innerHTML=`<div class="error-box">⚠️ Phase3エラー: ${e.message}</div>`; document.getElementById('run-btn').disabled=false; return; }
-  document.getElementById('p3-header').innerHTML=`<span class="phase-badge" style="background:linear-gradient(90deg,#f59e0b,#60a5fa,#34d399)">Phase 3</span><span style="font-weight:700;font-size:15px">🤝 総合討議 — 最終提言</span><span style="color:#4ade80;font-size:12px">✓ 完了</span>`;
-  setTag('tag3','#f59e0b','Phase 3 総合討議 ✓','#1a100a');
-  setProgress(100,'✅ 分析完了！');
-  document.getElementById('run-btn').disabled=false;
+
+async function callClaude(system, userMsg) {
+  const res = await fetch(`${VERCEL_URL}/api/claude`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1200, system, messages: [{ role: "user", content: userMsg }] })
+  });
+  const d = await res.json();
+  if (d.error) throw new Error(typeof d.error === 'string' ? d.error : d.error.message);
+  return d.content?.map(b => b.text || '').join('') || 'エラー';
+}
+async function callGPT(system, userMsg) {
+  const res = await fetch(`${VERCEL_URL}/api/openai`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "gpt-4o", max_tokens: 1000, messages: [{ role: "system", content: system }, { role: "user", content: userMsg }] })
+  });
+  const d = await res.json();
+  if (d.error) throw new Error(typeof d.error === 'string' ? d.error : d.error.message);
+  return d.choices?.[0]?.message?.content || 'エラー';
+}
+async function callGemini(system, userMsg) {
+  const res = await fetch(`${VERCEL_URL}/api/gemini`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "gemini-2.5-flash", system_instruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: userMsg }] }], generationConfig: { maxOutputTokens: 1000 } })
+  });
+  const d = await res.json();
+  if (d.error) throw new Error(typeof d.error === 'string' ? d.error : JSON.stringify(d.error));
+  return d.candidates?.[0]?.content?.parts?.[0]?.text || 'エラー';
+}
+
+function createRoundSection(roundNum, theme) {
+  const div = document.createElement('div');
+  div.className = 'round-section';
+  div.id = `round-${roundNum}`;
+  div.innerHTML = `
+    <div class="round-header" onclick="toggleRound(${roundNum})">
+      <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border-radius:6px;padding:2px 10px;font-weight:800;font-size:12px">Round ${roundNum}</span>
+      <span class="round-label" style="color:#94a3b8">${theme}</span>
+      <span class="collapse-btn" id="rd-toggle-${roundNum}">▼</span>
+    </div>
+    <div class="round-body" id="rd-body-${roundNum}">
+      <div id="rd-p1-${roundNum}"></div>
+      <div id="rd-p2-${roundNum}"></div>
+      <div id="rd-p3-${roundNum}"></div>
+    </div>`;
+  return div;
+}
+
+function toggleRound(n) {
+  const body = document.getElementById(`rd-body-${n}`);
+  const btn = document.getElementById(`rd-toggle-${n}`);
+  if (body.style.display === 'none') { body.style.display = ''; btn.textContent = '▼'; }
+  else { body.style.display = 'none'; btn.textContent = '▶'; }
+}
+
+async function runRound(roundNum, theme, prevSummary) {
+  const rd = document.getElementById(`rd${roundNum}`);
+  rd.className = 'round-dot active';
+
+  document.getElementById('round-label').textContent = `Round ${roundNum}/5: ${theme}`;
+  document.getElementById('round-pct').textContent = `Round ${roundNum}/5`;
+
+  const baseInfo = `${SYSTEM_INFO}\n\n【これまでの討議サマリー】\n${prevSummary || 'なし（初回）'}`;
+  const roundTopic = `【Round ${roundNum} テーマ】${theme}\n\n${baseInfo}`;
+
+  // Phase 1: ChatGPT
+  const p1El = document.getElementById(`rd-p1-${roundNum}`);
+  setProgress(Math.round((roundNum-1)*20 + 3), `Round ${roundNum} Phase1: ChatGPT調査中...`);
+  p1El.innerHTML = `<div class="card" style="border-left:4px solid #4ade80;margin-bottom:10px"><div class="card-header"><span class="phase-badge" style="background:#4ade80">Phase 1</span><span style="color:#4ade80;font-weight:700">🟢 ChatGPT — 調査</span>${dotsHTML('#4ade80')}</div><div class="card-content" id="rd-p1-text-${roundNum}">${dotsHTML('#4ade80')}</div></div>`;
+
+  let r1 = '';
+  try {
+    r1 = await callGPT(`あなたはAI思考チームの調査担当「ChatGPT」です。SDPF→AWS移行提案書作成のための討議Round ${roundNum}を担当します。テーマに沿って事実・データ・論点を調査・整理してください。400字程度。`, roundTopic);
+  } catch(e) { document.getElementById('error-area').innerHTML=`<div class="error-box">⚠️ Round${roundNum} Phase1エラー: ${e.message}</div>`; throw e; }
+  document.getElementById(`rd-p1-text-${roundNum}`).textContent = r1;
+  document.querySelector(`#rd-p1-${roundNum} .card-header`).innerHTML = `<span class="phase-badge" style="background:#4ade80">Phase 1</span><span style="color:#4ade80;font-weight:700">🟢 ChatGPT — 調査</span><span style="color:#4ade80;font-size:12px">✓</span>`;
+
+  // Phase 2: Gemini
+  const p2El = document.getElementById(`rd-p2-${roundNum}`);
+  setProgress(Math.round((roundNum-1)*20 + 8), `Round ${roundNum} Phase2: Gemini分析中...`);
+  p2El.innerHTML = `<div class="card" style="border-left:4px solid #60a5fa;margin-bottom:10px"><div class="card-header"><span class="phase-badge" style="background:#60a5fa">Phase 2</span><span style="color:#60a5fa;font-weight:700">🔵 Gemini — 分析</span>${dotsHTML('#60a5fa')}</div><div class="card-content" id="rd-p2-text-${roundNum}">${dotsHTML('#60a5fa')}</div></div>`;
+
+  let r2 = '';
+  try {
+    r2 = await callGemini(`あなたはAI思考チームの分析担当「Gemini」です。SDPF→AWS移行提案書作成のためのRound ${roundNum}討議を担当します。ChatGPTの調査を踏まえ深い分析・洞察を提供してください。400字程度。`, `【ChatGPT調査】\n${r1}\n\n【テーマ】\n${roundTopic}`);
+  } catch(e) { document.getElementById('error-area').innerHTML=`<div class="error-box">⚠️ Round${roundNum} Phase2エラー: ${e.message}</div>`; throw e; }
+  document.getElementById(`rd-p2-text-${roundNum}`).textContent = r2;
+  document.querySelector(`#rd-p2-${roundNum} .card-header`).innerHTML = `<span class="phase-badge" style="background:#60a5fa">Phase 2</span><span style="color:#60a5fa;font-weight:700">🔵 Gemini — 分析</span><span style="color:#4ade80;font-size:12px">✓</span>`;
+
+  // Phase 3: 3AI討議
+  const p3El = document.getElementById(`rd-p3-${roundNum}`);
+  setProgress(Math.round((roundNum-1)*20 + 13), `Round ${roundNum} Phase3: 3AI総合討議中...`);
+  p3El.innerHTML = `<div class="card"><div class="card-header"><span class="phase-badge" style="background:linear-gradient(90deg,#f59e0b,#60a5fa,#34d399)">Phase 3</span><span style="font-weight:700">🤝 総合討議</span>${dotsHTML('#f59e0b')}</div><div class="phase3-grid" id="rd-p3-grid-${roundNum}"><div class="phase3-card" style="background:#1c1000;border:1px solid #f59e0b30"><div style="color:#f59e0b;font-weight:700;margin-bottom:8px">🟡 Claude Code</div><div class="card-content" id="rd-claude-${roundNum}">${dotsHTML('#f59e0b')}</div></div><div class="phase3-card" style="background:#041508;border:1px solid #4ade8030"><div style="color:#4ade80;font-weight:700;margin-bottom:8px">🟢 ChatGPT</div><div class="card-content" id="rd-gpt-${roundNum}">${dotsHTML('#4ade80')}</div></div><div class="phase3-card" style="background:#030c1e;border:1px solid #60a5fa30"><div style="color:#60a5fa;font-weight:700;margin-bottom:8px">🔵 Gemini</div><div class="card-content" id="rd-gem-${roundNum}">${dotsHTML('#60a5fa')}</div></div></div></div>`;
+
+  const ctx = `【テーマ】${theme}\n【ChatGPT調査】${r1}\n【Gemini分析】${r2}\n${baseInfo}`;
+
+  let rc = '', rg = '', rgem = '';
+  try {
+    rc = await callClaude(`あなたはAI思考チームのリーダー「Claude Code」です。SDPF→AWS移行提案書作成のRound ${roundNum}リーダーとして、このラウンドの知見を統合し次のラウンドへの方針も示してください。300字程度。`, ctx);
+    document.getElementById(`rd-claude-${roundNum}`).textContent = rc;
+    rg = await callGPT(`あなたはChatGPTです。SDPF→AWS移行提案書Round ${roundNum}の討議で補足意見・具体的数値を200字程度で述べてください。`, ctx);
+    document.getElementById(`rd-gpt-${roundNum}`).textContent = rg;
+    rgem = await callGemini(`あなたはGeminiです。SDPF→AWS移行提案書Round ${roundNum}の討議でリスク・実装注意点を200字程度で述べてください。`, ctx);
+    document.getElementById(`rd-gem-${roundNum}`).textContent = rgem;
+  } catch(e) { document.getElementById('error-area').innerHTML=`<div class="error-box">⚠️ Round${roundNum} Phase3エラー: ${e.message}</div>`; throw e; }
+
+  document.querySelector(`#rd-p3-${roundNum} .card-header`).innerHTML = `<span class="phase-badge" style="background:linear-gradient(90deg,#f59e0b,#60a5fa,#34d399)">Phase 3</span><span style="font-weight:700">🤝 総合討議</span><span style="color:#4ade80;font-size:12px">✓ 完了</span>`;
+
+  setProgress(roundNum * 20, `Round ${roundNum} 完了`);
+  rd.className = 'round-dot done';
+
+  // 完了したラウンドを折りたたむ
+  if (roundNum < 5) {
+    setTimeout(() => toggleRound(roundNum), 1000);
+  }
+
+  return `Round ${roundNum}(${theme}):\nClaude: ${rc}\nChatGPT: ${rg}\nGemini: ${rgem}`;
+}
+
+async function runAll() {
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('error-area').innerHTML = '';
+  document.getElementById('rounds-area').innerHTML = '';
+  document.getElementById('final-area').innerHTML = '';
+
+  let prevSummary = '';
+  const roundsArea = document.getElementById('rounds-area');
+
+  try {
+    for (let i = 1; i <= 5; i++) {
+      const section = createRoundSection(i, ROUND_THEMES[i-1]);
+      roundsArea.appendChild(section);
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      await new Promise(r => setTimeout(r, 300));
+      prevSummary = await runRound(i, ROUND_THEMES[i-1], prevSummary);
+    }
+
+    // 最終提案書生成
+    setProgress(95, '最終提案書を生成中...');
+    document.getElementById('round-label').textContent = '最終提案書を生成中...';
+
+    const finalArea = document.getElementById('final-area');
+    finalArea.innerHTML = `<div class="final-proposal"><h2>📄 最終提案書を生成中...</h2><div>${dotsHTML('#4ade80')}</div></div>`;
+    finalArea.scrollIntoView({ behavior: 'smooth' });
+
+    const finalPrompt = `あなたはシステム移行の専門コンサルタント「Claude Code」です。
+5ラウンドの討議を経て、以下の提案書を作成してください。
+
+${SYSTEM_INFO}
+
+【5ラウンドの討議サマリー】
+${prevSummary}
+
+以下の構成で詳細な提案書を作成してください：
+
+# SDPF→AWS移行 vs SDPF延命 提案書
+
+## 1. エグゼクティブサマリー
+## 2. 現行システム課題分析
+## 3. 移行案A：AWS移行（推奨）
+   ### 3-1. アーキテクチャ設計（各サーバーのAWSサービスへのマッピング）
+   ### 3-2. 移行方式（Lift&Shift / Re-platform）
+   ### 3-3. 移行作業項目一覧（フェーズ別）
+   ### 3-4. 工数・費用試算
+   ### 3-5. ランニングコスト試算
+## 4. 移行案B：SDPF延命案
+   ### 4-1. 対応内容（OS/SQL Server/Tomcatバージョンアップ）
+   ### 4-2. 作業項目・工数・費用
+   ### 4-3. ランニングコスト
+## 5. 5年間TCO比較表（AWS移行 vs SDPF延命）
+## 6. リスク比較
+## 7. 移行スケジュール（案）
+## 8. 推奨案と理由
+
+具体的な数値（工数：人月、費用：万円単位）を含めて記載してください。`;
+
+    const finalDoc = await callClaude(finalPrompt, '上記の提案書を作成してください。');
+    finalArea.innerHTML = `
+      <div class="final-proposal">
+        <h2>📄 最終提案書（5ラウンド討議完了）</h2>
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="btn-success" onclick="copyProposal()">📋 提案書をコピー</button>
+        </div>
+        <div class="proposal-content" id="final-content">${finalDoc}</div>
+      </div>`;
+
+    setProgress(100, '✅ 完了！5ラウンドの討議を経て提案書が完成しました');
+    document.getElementById('round-label').textContent = '✅ 全5ラウンド完了 — 提案書が完成しました！';
+    document.getElementById('round-pct').textContent = 'Round 5/5 ✓';
+
+  } catch(e) {
+    console.error(e);
+  }
+
+  document.getElementById('run-btn').disabled = false;
+}
+
+function copyProposal() {
+  const text = document.getElementById('final-content').textContent;
+  navigator.clipboard.writeText(text).then(() => alert('提案書をコピーしました！'));
 }
 </script>
 </body>
